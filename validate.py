@@ -19,7 +19,6 @@ import pandas as pd
 from validators import relationships, metadata, dimensions, metric
 
 REPORT_DIR = "validation_reports"
-REPORT_FILE = os.path.join(REPORT_DIR, "validation_report.md")
 
 TABLE_VALIDATORS = {
     "relationships": relationships.run_all_checks,
@@ -46,13 +45,16 @@ def load_csv(path: str) -> pd.DataFrame:
     return df
 
 
-def append_report(table_type: str, csv_path: str, df: pd.DataFrame, results: list) -> None:
+def write_report(table_type: str, csv_path: str, df: pd.DataFrame, results: list) -> None:
     os.makedirs(REPORT_DIR, exist_ok=True)
     total = len(results)
     n_pass = sum(1 for r in results if r.level == "pass")
     n_warn = sum(1 for r in results if r.level == "warn")
     n_fail = sum(1 for r in results if r.level == "fail")
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now(timezone.utc)
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S UTC")
+    file_ts = now.strftime("%Y-%m-%d_%H-%M-%S")
+    report_path = os.path.join(REPORT_DIR, f"{file_ts}_{table_type}.md")
 
     summary_parts = [f"**{n_pass}/{total} passed**"]
     if n_warn:
@@ -61,7 +63,7 @@ def append_report(table_type: str, csv_path: str, df: pd.DataFrame, results: lis
         summary_parts.append(f"❌ {n_fail} failure{'s' if n_fail > 1 else ''}")
 
     lines = [
-        f"## {table_type.capitalize()} — `{os.path.basename(csv_path)}` — {timestamp}",
+        f"# {table_type.capitalize()} — `{os.path.basename(csv_path)}` — {timestamp}",
         "",
         f"Rows: {len(df)} &nbsp; Columns: {len(df.columns)} &nbsp; Result: {', '.join(summary_parts)}",
         "",
@@ -75,10 +77,10 @@ def append_report(table_type: str, csv_path: str, df: pd.DataFrame, results: lis
 
     lines += ["", "---", ""]
 
-    with open(REPORT_FILE, "a", encoding="utf-8") as f:
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
-    print(f"\nReport appended to {REPORT_FILE}")
+    print(f"\nReport written to {report_path}")
 
 
 def run(table_type: str, csv_path: str) -> None:
@@ -108,7 +110,7 @@ def run(table_type: str, csv_path: str) -> None:
         summary += f", {n_fail} failure{'s' if n_fail > 1 else ''}"
     print(f"\n{summary} ---")
 
-    append_report(table_type, csv_path, df, results)
+    write_report(table_type, csv_path, df, results)
 
     if n_fail:
         sys.exit(1)
