@@ -1,6 +1,8 @@
 # CML Proforma Validation
 
-Validates CML datasets against the CML Proforma schema (`CML Proforma Template v3.0.csv`).
+Validates CSV outputs of CML datasets against the CML Proforma schema Template v3.0.csv.
+
+These checks are to help you QA your outputs by comparing them against the rules specified in the schema and guidance. You should not consider these as comprehensive as there may be other issues in your data that they didn't detect.
 
 ## Setup
 
@@ -12,22 +14,41 @@ pip install pandas
 
 ## Usage
 
+### Auto-discover mode (default)
+
+Run with no arguments and the tool scans the current directory for the most recent CSV per table type, identified by the timestamp after the rightmost `__` in the filename:
+
 ```bash
-python validate.py <table_type> <path/to/file.csv>
+python validate.py
 ```
 
-`table_type` must be one of: `relationships`, `metadata`, `dimensions`, `metric`
+Point it at a different folder with `--folder`:
 
-### Examples
+```bash
+python validate.py --folder /path/to/pipeline/output
+```
+
+### Explicit mode
+
+Pass one or more `table_type` / `csv_path` pairs directly:
 
 ```bash
 python validate.py relationships relationships_2026-06-25.csv
-python validate.py metadata metadata_2026-06-25.csv
-python validate.py dimensions dimensions_2026-06-25.csv
-python validate.py metric metric_2026-06-25.csv
+python validate.py relationships relationships.csv metadata metadata.csv
 ```
 
-Results are printed to the terminal and appended to `validation_reports/validation_report.md` automatically.
+### `--timestamp` flag
+
+By default the report filename uses the current UTC time. Pass `--timestamp` to use the pipeline's own `generation_ts` instead, so the report is directly correlated to the pipeline run:
+
+```bash
+python validate.py --timestamp "2026-06-25 22:05:01"
+python validate.py --folder /output --timestamp "2026-06-25 22:05:01"
+```
+
+This produces `validation_reports/2026-06-25_22-05-01.md`.
+
+`table_type` must be one of: `relationships`, `metadata`, `dimensions`, `metric`
 
 ## Output
 
@@ -43,16 +64,17 @@ Only failures cause a non-zero exit code — warnings do not. This means the val
 
 ## Reports
 
-Every run writes a new timestamped report file to `validation_reports/`:
+Every run writes a single timestamped report to `validation_reports/`, named after the tables included:
 
 ```
 validation_reports/
     2026-06-26_09-21-27_metric.md
-    2026-06-26_09-35-14_metric.md   ← re-run after a fix
-    2026-06-26_10-01-00_metadata.md
+    2026-06-26_09-35-14_metric.md                        ← re-run after a fix
+    2026-06-26_10-01-00_relationships_metadata.md        ← two tables, one report
+    2026-06-26_10-05-00_relationships_metadata_dimensions_metric.md
 ```
 
-Each file is named `YYYY-MM-DD_HH-MM-SS_<table_type>.md` so the folder is a chronological audit trail of all runs. The folder is gitignored — reports live locally and are not committed.
+Each file is named `YYYY-MM-DD_HH-MM-SS.md` (or matches the `--timestamp` you passed) and contains a `##` section per table plus an overall summary header. The folder is gitignored — reports live locally and are not committed.
 
 ## Checks by table
 
