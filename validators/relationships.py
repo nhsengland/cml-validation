@@ -38,7 +38,7 @@ VALID_RELATIONSHIP_CATEGORIES = {"Direct", "Indirect", "NA"}
 
 # metric_id = metric_family_id + "_" + first 3 chars of metric_status.
 # Valid statuses: Actual, Estimate, Forecast, Planned, Variance, Complete, Incomplete
-VALID_METRIC_ID_SUFFIXES = {"act", "est", "for", "pla", "var", "com", "inc"}
+VALID_METRIC_ID_SUFFIXES = {"act", "est", "for", "pla", "var", "com", "inc", "prov"}
 METRIC_ID_PATTERN = r"^[A-Za-z0-9]+_(" + "|".join(VALID_METRIC_ID_SUFFIXES) + r")$"
 
 

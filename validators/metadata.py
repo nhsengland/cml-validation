@@ -73,7 +73,8 @@ MANDATORY_COLUMNS = [
 ]
 
 VALID_METRIC_STATUSES = {
-    "Actual", "Estimate", "Forecast", "Planned", "Variance", "Complete", "Incomplete"
+    "Actual", "Estimate", "Forecast", "Planned", "Variance", "Complete", "Incomplete",
+    "Provisional",
 }
 
 METRIC_STATUS_SUFFIX_MAP = {
@@ -84,6 +85,7 @@ METRIC_STATUS_SUFFIX_MAP = {
     "Variance": "var",
     "Complete": "com",
     "Incomplete": "inc",
+    "Provisional": "prov",
 }
 
 VALID_METRIC_STATES = {

@@ -33,7 +33,7 @@ PIPELINE_COLUMNS = {"generation_ts", "datapoint_id_generation_ts"}
 VALID_REPORTING_GRAINS = {"hourly", "daily", "weekly", "monthly", "quarterly"}
 
 # Valid metric_status suffixes — same rule as other tables
-VALID_METRIC_ID_SUFFIXES = {"act", "est", "for", "pla", "var", "com", "inc"}
+VALID_METRIC_ID_SUFFIXES = {"act", "est", "for", "pla", "var", "com", "inc", "prov"}
 METRIC_ID_PATTERN = r"^[A-Za-z0-9]+_(" + "|".join(VALID_METRIC_ID_SUFFIXES) + r")$"
 
 
