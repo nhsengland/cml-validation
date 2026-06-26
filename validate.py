@@ -10,13 +10,20 @@ Example:
     python validate.py relationships relationships_2026-06-25.csv
 """
 
+import os
 import sys
-import pandas as pd
-from validators import relationships
+from datetime import datetime, timezone
 
+import pandas as pd
+
+from validators import relationships, metadata
+
+REPORT_DIR = "validation_reports"
+REPORT_FILE = os.path.join(REPORT_DIR, "validation_report.md")
 
 TABLE_VALIDATORS = {
     "relationships": relationships.run_all_checks,
+    "metadata": metadata.run_all_checks,
 }
 
 
@@ -32,11 +39,36 @@ def load_csv(path: str) -> pd.DataFrame:
     except Exception as e:
         print(f"Error reading CSV: {e}")
         sys.exit(1)
-    # Strip whitespace from column names to guard against stray spaces
     df.columns = [c.strip() for c in df.columns]
-    # Drop fully-empty columns (e.g. trailing comma in CSV)
     df = df.loc[:, ~df.columns.str.fullmatch(r"Unnamed.*")]
     return df
+
+
+def append_report(table_type: str, csv_path: str, df: pd.DataFrame, results: list) -> None:
+    os.makedirs(REPORT_DIR, exist_ok=True)
+    passed = sum(1 for r in results if r.passed)
+    total = len(results)
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    lines = [
+        f"## {table_type.capitalize()} — `{os.path.basename(csv_path)}` — {timestamp}",
+        "",
+        f"Rows: {len(df)} &nbsp; Columns: {len(df.columns)} &nbsp; Result: **{passed}/{total} checks passed**",
+        "",
+        "| Check | Status | Details |",
+        "|---|:---:|---|",
+    ]
+    for r in results:
+        status = "✅ PASS" if r.passed else "❌ FAIL"
+        detail = r.message.replace("|", "\\|")
+        lines.append(f"| `{r.check_name}` | {status} | {detail} |")
+
+    lines += ["", "---", ""]
+
+    with open(REPORT_FILE, "a", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+    print(f"\nReport appended to {REPORT_FILE}")
 
 
 def run(table_type: str, csv_path: str) -> None:
@@ -59,6 +91,9 @@ def run(table_type: str, csv_path: str) -> None:
         print(result)
 
     print(f"\n--- {passed}/{len(results)} checks passed ---")
+
+    append_report(table_type, csv_path, df, results)
+
     if failed:
         sys.exit(1)
 

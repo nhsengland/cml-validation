@@ -9,6 +9,7 @@ __pycache__/
 *.csv
 *.xlsx
 .claude
+validation_reports/
 
 # Distribution / packaging
 .Python
