@@ -3,7 +3,7 @@
 Usage:
     python validate.py <table_type> <csv_path>
 
-    table_type: relationships (more to follow)
+    table_type: relationships, metadata, dimensions (more to follow)
     csv_path:   path to the CSV file to validate
 
 Example:
@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from validators import relationships, metadata
+from validators import relationships, metadata, dimensions, metric
 
 REPORT_DIR = "validation_reports"
 REPORT_FILE = os.path.join(REPORT_DIR, "validation_report.md")
@@ -24,6 +24,8 @@ REPORT_FILE = os.path.join(REPORT_DIR, "validation_report.md")
 TABLE_VALIDATORS = {
     "relationships": relationships.run_all_checks,
     "metadata": metadata.run_all_checks,
+    "dimensions": dimensions.run_all_checks,
+    "metric": metric.run_all_checks,
 }
 
 
@@ -46,22 +48,30 @@ def load_csv(path: str) -> pd.DataFrame:
 
 def append_report(table_type: str, csv_path: str, df: pd.DataFrame, results: list) -> None:
     os.makedirs(REPORT_DIR, exist_ok=True)
-    passed = sum(1 for r in results if r.passed)
     total = len(results)
+    n_pass = sum(1 for r in results if r.level == "pass")
+    n_warn = sum(1 for r in results if r.level == "warn")
+    n_fail = sum(1 for r in results if r.level == "fail")
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    summary_parts = [f"**{n_pass}/{total} passed**"]
+    if n_warn:
+        summary_parts.append(f"⚠️ {n_warn} warning{'s' if n_warn > 1 else ''}")
+    if n_fail:
+        summary_parts.append(f"❌ {n_fail} failure{'s' if n_fail > 1 else ''}")
 
     lines = [
         f"## {table_type.capitalize()} — `{os.path.basename(csv_path)}` — {timestamp}",
         "",
-        f"Rows: {len(df)} &nbsp; Columns: {len(df.columns)} &nbsp; Result: **{passed}/{total} checks passed**",
+        f"Rows: {len(df)} &nbsp; Columns: {len(df.columns)} &nbsp; Result: {', '.join(summary_parts)}",
         "",
         "| Check | Status | Details |",
         "|---|:---:|---|",
     ]
     for r in results:
-        status = "✅ PASS" if r.passed else "❌ FAIL"
+        icon = {"pass": "✅ PASS", "warn": "⚠️ WARN", "fail": "❌ FAIL"}[r.level]
         detail = r.message.replace("|", "\\|")
-        lines.append(f"| `{r.check_name}` | {status} | {detail} |")
+        lines.append(f"| `{r.check_name}` | {icon} | {detail} |")
 
     lines += ["", "---", ""]
 
@@ -84,17 +94,23 @@ def run(table_type: str, csv_path: str) -> None:
     validator = TABLE_VALIDATORS[table_type]
     results = validator(df)
 
-    passed = sum(1 for r in results if r.passed)
-    failed = len(results) - passed
+    n_pass = sum(1 for r in results if r.level == "pass")
+    n_warn = sum(1 for r in results if r.level == "warn")
+    n_fail = sum(1 for r in results if r.level == "fail")
 
     for result in results:
         print(result)
 
-    print(f"\n--- {passed}/{len(results)} checks passed ---")
+    summary = f"--- {n_pass}/{len(results)} passed"
+    if n_warn:
+        summary += f", {n_warn} warning{'s' if n_warn > 1 else ''}"
+    if n_fail:
+        summary += f", {n_fail} failure{'s' if n_fail > 1 else ''}"
+    print(f"\n{summary} ---")
 
     append_report(table_type, csv_path, df, results)
 
-    if failed:
+    if n_fail:
         sys.exit(1)
 
 
