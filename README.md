@@ -2,7 +2,7 @@
 
 Validates CSV outputs of CML datasets against the CML Proforma schema Template v3.0.csv.
 
-These checks are to help you QA your outputs by comparing them against the rules specified in the schema and guidance. You should not consider these as comprehensive as there may be other issues in your data that they didn't detect.
+**Important:**: These checks are to help you QA your outputs by comparing them against the rules specified in the schema and guidance. You should not consider these as comprehensive as there may be other issues in your data that they didn't detect.
 
 ## Setup
 
@@ -16,7 +16,9 @@ pip install pandas
 
 ### Auto-discover mode (default)
 
-Run with no arguments and the tool scans the current directory for the most recent CSV per table type, identified by the timestamp after the rightmost `__` in the filename:
+Run with no arguments and the tool scans the current directory for the most recent CSV per table type, identified by the timestamp after the rightmost `__` in the filename.
+
+**Important**: Your file names must have the timestamp after `__` for auto-discover to work.
 
 ```bash
 python validate.py
@@ -39,7 +41,7 @@ python validate.py relationships relationships.csv metadata metadata.csv
 
 ### `--timestamp` flag
 
-By default the report filename uses the current UTC time. Pass `--timestamp` to use the pipeline's own `generation_ts` instead, so the report is directly correlated to the pipeline run:
+By default the report filename uses the current UTC time. Pass `--timestamp` to use a specific timestamp, e.g., the pipeline's own `generation_ts` so the report is directly correlated to the pipeline run:
 
 ```bash
 python validate.py --timestamp "2026-06-25 22:05:01"
@@ -64,14 +66,14 @@ Only failures cause a non-zero exit code — warnings do not. This means the val
 
 ## Reports
 
-Every run writes a single timestamped report to `validation_reports/`, named after the tables included:
+Every run writes a single timestamped report to `validation_reports/`:
 
 ```
 validation_reports/
-    2026-06-26_09-21-27_metric.md
-    2026-06-26_09-35-14_metric.md                        ← re-run after a fix
-    2026-06-26_10-01-00_relationships_metadata.md        ← two tables, one report
-    2026-06-26_10-05-00_relationships_metadata_dimensions_metric.md
+    2026-06-26_09-21-27.md
+    2026-06-26_09-35-14.md
+    2026-06-26_10-01-00.md
+    2026-06-26_10-05-00.md
 ```
 
 Each file is named `YYYY-MM-DD_HH-MM-SS.md` (or matches the `--timestamp` you passed) and contains a `##` section per table plus an overall summary header. The folder is gitignored — reports live locally and are not committed.
@@ -154,5 +156,4 @@ validators/
     dimensions.py
     metric.py
 validation_reports/          # Gitignored — audit trail of all runs
-CML Proforma Template v3.0.csv  # Schema and guidance
 ```
