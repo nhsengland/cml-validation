@@ -2,7 +2,17 @@
 
 Validates CSV outputs of CML datasets against the CML Proforma schema Template v3.0.csv.
 
-**Important:**: These checks are to help you QA your outputs by comparing them against the rules specified in the schema and guidance. You should not consider these as comprehensive as there may be other issues in your data that they didn't detect.
+**Important:** These checks are to help you QA your outputs by comparing them against the rules specified in the schema and guidance. You should not consider these as comprehensive as there may be other issues in your data that they didn't detect.
+
+
+## How does this differ from cml-schemas
+
+[cml-schemas](https://github.com/nhsengland/cml-schemas) is a package that should become a dependency of your pipeline, you should use it during the creation of your outputs to ensure you have created all the required columns, and they are the relevant data types. As you will likely create one large table/dataframe which is later split into metric and dimensions, you can use cml-schemas to perform this split. So cml-schemas becomes part of your pipeline's processing.
+
+cml-validation is more like an integration test you would run while developing your pipeline.
+
+There is overlap between these two packages. A future development would be for cml-schemas to become a dependency of cml-validation, and you might also want to build these tests into your testing package.
+
 
 ## Setup
 
